@@ -7,34 +7,45 @@ export async function sendChatMessage(
   apiKey: string,
   model: string,
 ): Promise<string> {
-  const response = await fetch(OPENROUTER_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://pixelelectron.app',
-      'X-Title': 'PixelElectron',
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 4096,
-    }),
-  })
+  const modelsToTry = [model, ...AVAILABLE_MODELS.map(m => m.id).filter(id => id !== model)]
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`OpenRouter API error (${response.status}): ${errorText}`)
+  for (const tryModel of modelsToTry) {
+    const response = await fetch(OPENROUTER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://pixelelectron.app',
+        'X-Title': 'PixelElectron',
+      },
+      body: JSON.stringify({
+        model: tryModel,
+        messages,
+        temperature: 0.7,
+        max_tokens: 4096,
+      }),
+    })
+
+    if (response.status === 429) {
+      continue
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      try {
+        const err = JSON.parse(errorText)
+        if (err.error?.code === 429) continue
+      } catch { /* not JSON */ }
+      throw new Error(`OpenRouter API error (${response.status}): ${errorText}`)
+    }
+
+    const data: OpenRouterResponse = await response.json()
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message.content
+    }
   }
 
-  const data: OpenRouterResponse = await response.json()
-
-  if (!data.choices || data.choices.length === 0) {
-    throw new Error('No response from AI model')
-  }
-
-  return data.choices[0].message.content
+  throw new Error('All models are currently rate-limited. Please try again in a minute.')
 }
 
 export async function streamChatMessage(
@@ -44,27 +55,38 @@ export async function streamChatMessage(
   onChunk: (chunk: string) => void,
   onDone: () => void,
 ): Promise<void> {
-  const response = await fetch(OPENROUTER_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://pixelelectron.app',
-      'X-Title': 'PixelElectron',
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 4096,
-      stream: true,
-    }),
-  })
+  const modelsToTry = [model, ...AVAILABLE_MODELS.map(m => m.id).filter(id => id !== model)]
+  let response: Response | null = null
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`OpenRouter API error (${response.status}): ${errorText}`)
+  for (const tryModel of modelsToTry) {
+    const r = await fetch(OPENROUTER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://pixelelectron.app',
+        'X-Title': 'PixelElectron',
+      },
+      body: JSON.stringify({
+        model: tryModel,
+        messages,
+        temperature: 0.7,
+        max_tokens: 4096,
+        stream: true,
+      }),
+    })
+
+    if (r.status === 429) continue
+    if (!r.ok) {
+      const text = await r.text()
+      try { if (JSON.parse(text).error?.code === 429) continue } catch { /* */ }
+      throw new Error(`OpenRouter API error (${r.status}): ${text}`)
+    }
+    response = r
+    break
   }
+
+  if (!response) throw new Error('All models are currently rate-limited. Please try again in a minute.')
 
   const reader = response.body?.getReader()
   if (!reader) throw new Error('No response body')

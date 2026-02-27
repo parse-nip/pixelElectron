@@ -28,7 +28,7 @@ function createWindow() {
     } : {}),
     backgroundColor: '#191919',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       webviewTag: true,
