@@ -2,18 +2,23 @@
 
 ## Cursor Cloud specific instructions
 
-### Repository Status
+### Overview
 
-This repository (`pixelElectron`) is currently empty — it contains only a `README.md` with the project title. No source code, dependencies, build configuration, or application logic exists yet.
+PixelElectron is an Electron desktop app ("Cursor for Minecraft") built with React, Vite, TypeScript, Tailwind CSS v3, and shadcn/ui. It connects to Minecraft servers via RCON and uses OpenRouter for AI chat.
 
-### Environment
+### Running the app
 
-- **Node.js**: v24.13.1 (LTS Krypton) is installed via nvm and set as default.
-- **npm**: v11.8.0 is available.
-- **No package manager lockfile** exists, so no dependency installation is needed until code is committed.
+- `npm run dev` starts the Vite dev server and launches Electron automatically (via `vite-plugin-electron`).
+- `npm run build` builds both the renderer (to `dist/`) and electron (to `dist-electron/`).
+- `npm run lint` runs ESLint v9 (flat config) on `src/` and `electron/`.
+- A `DISPLAY` environment variable is required for Electron to open its window. The cloud VM has `:1` pre-configured.
+- dbus errors in the console output are expected and harmless in headless environments.
 
-### Notes for Future Agents
+### Key conventions
 
-- The project name suggests an Electron-based application. When code is added, expect to need Electron, possibly with a frontend framework (React/Vue/etc.).
-- There is no `package.json` yet. Once one is committed, the update script should be updated to run the appropriate install command (`npm install`, `pnpm install`, etc.) based on the lockfile present.
-- User rules specify: use shadcn/ui components, never use Lucide React icons, and always switch to the latest Node.js version available.
+- **No Lucide React**: The user rule prohibits direct use of `lucide-react`. Use inline SVGs or unicode characters for icons. The shadcn dialog component has been patched to use an inline SVG instead of the Lucide `X` icon.
+- **shadcn/ui only**: Always use the CLI (`npx shadcn@latest add <component>`) to add new UI components. Never recreate them manually.
+- **Tailwind CSS v3**: This project uses Tailwind v3 (not v4) for compatibility with shadcn.
+- **Node.js**: Use the latest LTS version available via nvm. Currently v24.x.
+- **OpenRouter API key**: Required for AI chat. Users configure it in the Settings dialog. The `OPENROUTER_API_KEY` secret can be used for automated testing.
+- **RCON**: The Electron main process manages the RCON connection. The renderer communicates via IPC (`window.electronAPI.rcon`). A running Minecraft server is needed for RCON to work.
