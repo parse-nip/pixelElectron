@@ -17,5 +17,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     status: () =>
       ipcRenderer.invoke('bot:status'),
   },
+  fs: {
+    writeFile: (relativePath: string, content: string, serverDir: string) =>
+      ipcRenderer.invoke('fs:writeFile', relativePath, content, serverDir),
+    readFile: (relativePath: string, serverDir: string) =>
+      ipcRenderer.invoke('fs:readFile', relativePath, serverDir),
+    exists: (relativePath: string, serverDir: string) =>
+      ipcRenderer.invoke('fs:exists', relativePath, serverDir),
+  },
   getEnvApiKey: () => ipcRenderer.invoke('get-env-api-key'),
 })

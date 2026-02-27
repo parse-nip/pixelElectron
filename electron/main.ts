@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { Rcon } from 'rcon-client'
 import path from 'node:path'
+import fs from 'node:fs/promises'
 
 process.env.DIST_ELECTRON = path.join(__dirname)
 process.env.DIST = path.join(process.env.DIST_ELECTRON, '../dist')
@@ -41,7 +42,8 @@ function createWindow() {
   }
 }
 
-// RCON handlers
+// ── RCON handlers ──
+
 ipcMain.handle('rcon:connect', async (_event, config: { host: string; port: number; password: string }) => {
   try {
     if (rconClient) {
@@ -63,12 +65,12 @@ ipcMain.handle('rcon:connect', async (_event, config: { host: string; port: numb
 
 ipcMain.handle('rcon:send', async (_event, command: string) => {
   if (!rconClient) {
-    return { success: false, error: 'Not connected to server' }
+    return { success: false, error: 'Not connected to server. Connect via RCON first.' }
   }
   try {
     const cleanCommand = command.startsWith('/') ? command.slice(1) : command
     const response = await rconClient.send(cleanCommand)
-    return { success: true, response }
+    return { success: true, response: response || '(no output)' }
   } catch (error: any) {
     return { success: false, error: error?.message || 'Command failed' }
   }
@@ -82,7 +84,54 @@ ipcMain.handle('rcon:disconnect', async () => {
   return { success: true }
 })
 
-// Bot/Viewer handlers
+// ── Filesystem handlers ──
+
+ipcMain.handle('fs:writeFile', async (_event, relativePath: string, content: string, serverDir: string) => {
+  if (!serverDir) {
+    return { success: false, error: 'Server directory not set. Configure it in the sidebar.' }
+  }
+  try {
+    const fullPath = path.resolve(serverDir, relativePath)
+    if (!fullPath.startsWith(path.resolve(serverDir))) {
+      return { success: false, error: 'Path traversal not allowed' }
+    }
+    await fs.mkdir(path.dirname(fullPath), { recursive: true })
+    await fs.writeFile(fullPath, content, 'utf-8')
+    return { success: true, fullPath }
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'Write failed' }
+  }
+})
+
+ipcMain.handle('fs:readFile', async (_event, relativePath: string, serverDir: string) => {
+  if (!serverDir) {
+    return { success: false, error: 'Server directory not set' }
+  }
+  try {
+    const fullPath = path.resolve(serverDir, relativePath)
+    if (!fullPath.startsWith(path.resolve(serverDir))) {
+      return { success: false, error: 'Path traversal not allowed' }
+    }
+    const content = await fs.readFile(fullPath, 'utf-8')
+    return { success: true, content }
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'Read failed' }
+  }
+})
+
+ipcMain.handle('fs:exists', async (_event, relativePath: string, serverDir: string) => {
+  if (!serverDir) return { exists: false }
+  try {
+    const fullPath = path.resolve(serverDir, relativePath)
+    await fs.access(fullPath)
+    return { exists: true }
+  } catch {
+    return { exists: false }
+  }
+})
+
+// ── Bot/Viewer handlers ──
+
 ipcMain.handle('bot:connect', async (_event, config: { host: string; port: number; username: string }) => {
   try {
     if (mcBot) {
@@ -156,7 +205,8 @@ ipcMain.handle('bot:status', () => {
   }
 })
 
-// Environment variable handler
+// ── Environment ──
+
 ipcMain.handle('get-env-api-key', () => {
   return process.env.OPENROUTER_API_KEY || ''
 })

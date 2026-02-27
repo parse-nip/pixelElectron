@@ -11,6 +11,11 @@ interface ElectronAPI {
     disconnect: () => Promise<{ success: boolean }>;
     status: () => Promise<{ connected: boolean; viewerPort: number }>;
   };
+  fs: {
+    writeFile: (relativePath: string, content: string, serverDir: string) => Promise<{ success: boolean; fullPath?: string; error?: string }>;
+    readFile: (relativePath: string, serverDir: string) => Promise<{ success: boolean; content?: string; error?: string }>;
+    exists: (relativePath: string, serverDir: string) => Promise<{ exists: boolean }>;
+  };
   getEnvApiKey: () => Promise<string>;
 }
 

@@ -10,9 +10,12 @@ interface ChatPanelProps {
   isLoading: boolean
   error: string | null
   isConnected: boolean
+  hasServerDir: boolean
   onSendMessage: (content: string) => void
   onExecuteCommand: (messageId: string, commandIndex: number) => void
   onExecuteAll: (messageId: string) => void
+  onCreateFile: (messageId: string, fileIndex: number) => void
+  onCreateAllFiles: (messageId: string) => void
   onClear: () => void
 }
 
@@ -21,9 +24,12 @@ export function ChatPanel({
   isLoading,
   error,
   isConnected,
+  hasServerDir,
   onSendMessage,
   onExecuteCommand,
   onExecuteAll,
+  onCreateFile,
+  onCreateAllFiles,
   onClear,
 }: ChatPanelProps) {
   const [input, setInput] = useState('')
@@ -79,8 +85,11 @@ export function ChatPanel({
                 key={message.id}
                 message={message}
                 isConnected={isConnected}
+                hasServerDir={hasServerDir}
                 onExecuteCommand={(idx) => onExecuteCommand(message.id, idx)}
                 onExecuteAll={() => onExecuteAll(message.id)}
+                onCreateFile={(idx) => onCreateFile(message.id, idx)}
+                onCreateAllFiles={() => onCreateAllFiles(message.id)}
               />
             ))}
             {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (

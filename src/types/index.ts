@@ -4,6 +4,7 @@ export interface ChatMessage {
   content: string
   timestamp: number
   commands?: ParsedCommand[]
+  files?: ParsedFileAction[]
 }
 
 export interface ParsedCommand {
@@ -11,6 +12,13 @@ export interface ParsedCommand {
   description?: string
   status: 'pending' | 'executing' | 'success' | 'error'
   response?: string
+}
+
+export interface ParsedFileAction {
+  path: string
+  content: string
+  status: 'pending' | 'creating' | 'success' | 'error'
+  error?: string
 }
 
 export interface ServerConfig {
@@ -30,6 +38,7 @@ export interface AppSettings {
   model: string
   serverConfig: ServerConfig
   botConfig: BotConfig
+  serverDir: string
 }
 
 export interface OpenRouterMessage {

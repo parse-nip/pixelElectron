@@ -6,6 +6,8 @@ import type { ServerConfig } from '@/types'
 interface SidebarProps {
   serverConfig: ServerConfig
   onServerConfigChange: (config: ServerConfig) => void
+  serverDir: string
+  onServerDirChange: (dir: string) => void
   isConnected: boolean
   onConnect: () => void
   onDisconnect: () => void
@@ -19,6 +21,8 @@ interface SidebarProps {
 export function Sidebar({
   serverConfig,
   onServerConfigChange,
+  serverDir,
+  onServerDirChange,
   isConnected,
   onConnect,
   onDisconnect,
@@ -130,6 +134,22 @@ export function Sidebar({
             </Button>
           </div>
         )}
+      </div>
+
+      {/* Server Directory */}
+      <div className="px-3 py-2">
+        <span className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase mb-1.5 block">
+          Server Directory
+        </span>
+        <Input
+          placeholder="/path/to/minecraft/server"
+          value={serverDir}
+          onChange={(e) => onServerDirChange(e.target.value)}
+          className="h-7 text-[11px] bg-transparent border-border/40 focus:border-border px-2"
+        />
+        <p className="text-[9px] text-muted-foreground/60 mt-1 leading-snug">
+          Local path for file creation (datapacks, configs)
+        </p>
       </div>
 
       {/* Spacer */}

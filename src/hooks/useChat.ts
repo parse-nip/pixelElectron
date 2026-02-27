@@ -1,13 +1,13 @@
 import { useState, useCallback, useRef } from 'react'
-import type { ChatMessage, OpenRouterMessage, ParsedCommand } from '@/types'
+import type { ChatMessage, OpenRouterMessage, ParsedCommand, ParsedFileAction } from '@/types'
 import { streamChatMessage, sendChatMessage } from '@/lib/openrouter'
-import { SYSTEM_PROMPT, parseCommandBlocks } from '@/lib/minecraft-agent'
+import { SYSTEM_PROMPT, parseCommandBlocks, parseFileBlocks } from '@/lib/minecraft-agent'
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
 }
 
-export function useChat(apiKey: string, model: string) {
+export function useChat(apiKey: string, model: string, serverDir: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -49,16 +49,12 @@ export function useChat(apiKey: string, model: string) {
 
       try {
         await streamChatMessage(
-          history,
-          apiKey,
-          model,
+          history, apiKey, model,
           (chunk) => {
             if (abortRef.current) return
             fullContent += chunk
             setMessages(prev =>
-              prev.map(m =>
-                m.id === assistantId ? { ...m, content: fullContent } : m,
-              ),
+              prev.map(m => m.id === assistantId ? { ...m, content: fullContent } : m),
             )
           },
           () => { /* done */ },
@@ -73,10 +69,22 @@ export function useChat(apiKey: string, model: string) {
         status: 'pending' as const,
       }))
 
+      const fileBlocks = parseFileBlocks(fullContent)
+      const files: ParsedFileAction[] = fileBlocks.map(f => ({
+        path: f.path,
+        content: f.content,
+        status: 'pending' as const,
+      }))
+
       setMessages(prev =>
         prev.map(m =>
           m.id === assistantId
-            ? { ...m, content: fullContent, commands: commands.length > 0 ? commands : undefined }
+            ? {
+                ...m,
+                content: fullContent,
+                commands: commands.length > 0 ? commands : undefined,
+                files: files.length > 0 ? files : undefined,
+              }
             : m,
         ),
       )
@@ -136,6 +144,58 @@ export function useChat(apiKey: string, model: string) {
     }
   }, [messages, executeCommand])
 
+  const createFile = useCallback(async (messageId: string, fileIndex: number) => {
+    const api = window.electronAPI
+    if (!api) {
+      setError('File system not available (running outside Electron)')
+      return
+    }
+    if (!serverDir) {
+      setError('Set the server directory in the sidebar to create files')
+      return
+    }
+
+    setMessages(prev =>
+      prev.map(m => {
+        if (m.id !== messageId || !m.files) return m
+        const files = [...m.files]
+        files[fileIndex] = { ...files[fileIndex], status: 'creating' }
+        return { ...m, files }
+      }),
+    )
+
+    const msg = messages.find(m => m.id === messageId)
+    const file = msg?.files?.[fileIndex]
+    if (!file) return
+
+    const result = await api.fs.writeFile(file.path, file.content, serverDir)
+
+    setMessages(prev =>
+      prev.map(m => {
+        if (m.id !== messageId || !m.files) return m
+        const files = [...m.files]
+        files[fileIndex] = {
+          ...files[fileIndex],
+          status: result.success ? 'success' : 'error',
+          error: result.error,
+        }
+        return { ...m, files }
+      }),
+    )
+  }, [messages, serverDir])
+
+  const createAllFiles = useCallback(async (messageId: string) => {
+    const msg = messages.find(m => m.id === messageId)
+    if (!msg?.files) return
+
+    for (let i = 0; i < msg.files.length; i++) {
+      if (msg.files[i].status === 'pending') {
+        await createFile(messageId, i)
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+    }
+  }, [messages, createFile])
+
   const clearMessages = useCallback(() => {
     setMessages([])
     setError(null)
@@ -148,6 +208,8 @@ export function useChat(apiKey: string, model: string) {
     sendMessage,
     executeCommand,
     executeAllCommands,
+    createFile,
+    createAllFiles,
     clearMessages,
     setError,
   }

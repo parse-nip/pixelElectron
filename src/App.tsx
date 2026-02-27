@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     port: 25565,
     username: 'PixelBot',
   },
+  serverDir: '',
 }
 
 function loadSettings(): AppSettings {
@@ -51,8 +52,9 @@ export default function App() {
 
   const {
     messages, isLoading, error,
-    sendMessage, executeCommand, executeAllCommands, clearMessages,
-  } = useChat(settings.apiKey, settings.model)
+    sendMessage, executeCommand, executeAllCommands,
+    createFile, createAllFiles, clearMessages,
+  } = useChat(settings.apiKey, settings.model, settings.serverDir)
 
   useEffect(() => {
     if (!settings.apiKey && window.electronAPI?.getEnvApiKey) {
@@ -65,13 +67,14 @@ export default function App() {
   useEffect(() => { saveSettings(settings) }, [settings])
 
   const handleSettingsChange = useCallback((s: AppSettings) => setSettings(s), [])
-
   const handleServerConfigChange = useCallback((config: ServerConfig) => {
     setSettings(prev => ({ ...prev, serverConfig: config }))
   }, [])
-
   const handleBotConfigChange = useCallback((config: BotConfig) => {
     setSettings(prev => ({ ...prev, botConfig: config }))
+  }, [])
+  const handleServerDirChange = useCallback((dir: string) => {
+    setSettings(prev => ({ ...prev, serverDir: dir }))
   }, [])
 
   const handleConnect = useCallback(async () => {
@@ -115,6 +118,20 @@ export default function App() {
     setBotError(null)
   }, [])
 
+  const chatPanelProps = {
+    messages,
+    isLoading,
+    error,
+    isConnected,
+    hasServerDir: !!settings.serverDir,
+    onSendMessage: sendMessage,
+    onExecuteCommand: executeCommand,
+    onExecuteAll: executeAllCommands,
+    onCreateFile: createFile,
+    onCreateAllFiles: createAllFiles,
+    onClear: clearMessages,
+  }
+
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
@@ -122,6 +139,8 @@ export default function App() {
         <Sidebar
           serverConfig={settings.serverConfig}
           onServerConfigChange={handleServerConfigChange}
+          serverDir={settings.serverDir}
+          onServerDirChange={handleServerDirChange}
           isConnected={isConnected}
           onConnect={handleConnect}
           onDisconnect={handleDisconnect}
@@ -136,24 +155,11 @@ export default function App() {
       {/* Main content */}
       <div className="flex-1 flex min-w-0">
         {activeView === 'chat' ? (
-          <div className="flex-1 flex">
-            {/* Chat panel */}
-            <div className="flex-1 min-w-0">
-              <ChatPanel
-                messages={messages}
-                isLoading={isLoading}
-                error={error}
-                isConnected={isConnected}
-                onSendMessage={sendMessage}
-                onExecuteCommand={executeCommand}
-                onExecuteAll={executeAllCommands}
-                onClear={clearMessages}
-              />
-            </div>
+          <div className="flex-1 min-w-0">
+            <ChatPanel {...chatPanelProps} />
           </div>
         ) : (
           <div className="flex-1 flex">
-            {/* Viewport */}
             <div className="flex-1 min-w-0">
               <MinecraftViewport
                 botConfig={settings.botConfig}
@@ -166,18 +172,8 @@ export default function App() {
                 onBotDisconnect={handleBotDisconnect}
               />
             </div>
-            {/* Side chat in viewport mode */}
             <div className="w-[380px] flex-shrink-0 border-l border-border/40">
-              <ChatPanel
-                messages={messages}
-                isLoading={isLoading}
-                error={error}
-                isConnected={isConnected}
-                onSendMessage={sendMessage}
-                onExecuteCommand={executeCommand}
-                onExecuteAll={executeAllCommands}
-                onClear={clearMessages}
-              />
+              <ChatPanel {...chatPanelProps} />
             </div>
           </div>
         )}
