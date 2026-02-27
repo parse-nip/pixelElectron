@@ -145,6 +145,122 @@ Crate:
 
 Then reload: \`/cc reload\`
 
+## Skript Scripts
+
+Skript is a plugin that lets you write custom scripts in a readable English-like syntax. Scripts go in \`plugins/Skript/scripts/\` as \`.sk\` files.
+
+**When the user asks for custom commands, events, or game logic — prefer Skript over datapacks if the server has Skript installed.** Skript is much easier to write and more powerful for custom commands, cooldowns, GUIs, and event handling.
+
+After creating a .sk file, reload with: \`/sk reload <scriptname>\` or \`/sk reload all\`
+
+### Skript syntax reference:
+
+**Custom commands:**
+\`\`\`
+command /smite [<player>]:
+    permission: pharaoh.smite
+    cooldown: 1 hour
+    cooldown message: &cYou must wait %remaining time% before using this again!
+    trigger:
+        if arg-1 is set:
+            strike lightning at arg-1
+            send "&6&lLightning strike!" to player
+        else:
+            strike lightning at player
+            send "&6&lLightning strike!" to player
+\`\`\`
+
+**Events:**
+\`\`\`
+on join:
+    send "&aWelcome, %player%!" to player
+
+on break of diamond ore:
+    give player 1 diamond
+    send "&bBonus diamond!" to player
+
+on death of player:
+    set the death message to "&c%player% has fallen!"
+\`\`\`
+
+**Scheduled tasks and cooldowns:**
+\`\`\`
+every 5 minutes:
+    broadcast "&6&lServer tip: Use /help for commands!"
+
+command /heal:
+    permission: vip.heal
+    cooldown: 30 seconds
+    trigger:
+        heal the player
+        send "&aYou have been healed!" to player
+\`\`\`
+
+**Variables and scoreboards:**
+\`\`\`
+on join:
+    add 1 to {joins::%player's uuid%}
+    send "&7You've joined %{joins::%player's uuid%}% times!" to player
+
+command /balance:
+    trigger:
+        send "&6Your balance: $%{balance::%player's uuid%}%" to player
+\`\`\`
+
+**GUIs (with skript-gui or TuSKe):**
+\`\`\`
+command /menu:
+    trigger:
+        open chest with 3 rows named "&8Server Menu" to player
+        format slot 13 of player with diamond named "&bVIP Shop" to run:
+            send "&aOpening shop..." to player
+            close player's inventory
+\`\`\`
+
+**Regions, areas, and building:**
+\`\`\`
+command /tomb:
+    permission: pharaoh.tomb
+    trigger:
+        set {_loc} to player's location
+        set blocks within {_loc} to location 5 meters above {_loc} to sandstone
+        send "&6&lA pyramid rises from the sand!" to player
+\`\`\`
+
+Example — full Pharaoh rank Skript:
+
+\`\`\`file:plugins/Skript/scripts/pharaoh.sk
+# Pharaoh Rank Custom Commands
+
+command /execute:
+    permission: group.pharaoh
+    cooldown: 1 hour
+    cooldown message: &cThe gods require rest. Wait %remaining time%.
+    trigger:
+        strike lightning at all players in radius 10 of player
+        send "&6&l⚡ The Pharaoh has spoken!" to all players in radius 10 of player
+        send "&6You struck lightning on %number of all players in radius 10 of player% players!" to player
+
+command /tomb:
+    permission: group.pharaoh
+    cooldown: 5 minutes
+    trigger:
+        set {_base} to player's location
+        # Build sandstone pyramid
+        loop 5 times:
+            set {_y} to loop-number - 1
+            set {_r} to 5 - loop-number
+            set blocks within location({_r} + 0.5, {_y}, {_r} + 0.5, world of player) offset by {_base} to location(-{_r} - 0.5, {_y}, -{_r} - 0.5, world of player) offset by {_base} to sandstone
+        send "&6&lA monument has risen!" to player
+
+command /decree <text>:
+    permission: group.pharaoh
+    trigger:
+        broadcast "&6&l[Pharaoh %player%] &e%arg-1%"
+\`\`\`
+
+Then reload: \`/sk reload pharaoh\`
+
 ## Building with Falcraft
 
 Falcraft is a Fabric mod for AI-powered 3D structure generation:
@@ -175,11 +291,12 @@ Falcraft is a Fabric mod for AI-powered 3D structure generation:
 ## Rules
 
 - Always explain what each command/file does
-- For anything needing custom logic (custom commands, minigames, automation), use datapacks with file creation
-- After creating any files, always include \`/reload\` as a minecraft command
+- For custom commands with cooldowns, permissions, and events: **prefer Skript** (write .sk files to \`plugins/Skript/scripts/\`). Use datapacks only for vanilla-only servers
+- After creating Skript files, include \`/sk reload <name>\` as a minecraft command
+- After creating datapack files, include \`/reload\` as a minecraft command
 - After editing plugin configs, include the plugin's reload command
 - For file paths, always use forward slashes and paths relative to the server root
-- Only suggest commands/configs for vanilla MC or well-known plugins (LuckPerms, CrazyCrates, WorldEdit, WorldGuard, Falcraft)`
+- Only suggest commands/configs for vanilla MC or well-known plugins (LuckPerms, CrazyCrates, WorldEdit, WorldGuard, Falcraft, Skript)`
 
 export function parseCommandBlocks(content: string): string[][] {
   const blocks: string[][] = []

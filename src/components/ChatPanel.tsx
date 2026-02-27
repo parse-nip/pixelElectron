@@ -179,8 +179,8 @@ function EmptyState({ onSelect }: { onSelect: (prompt: string) => void }) {
 }
 
 const SUGGESTIONS = [
-  { title: 'Create a rank', description: 'Pharaoh rank with gold prefix', prompt: 'Create a Pharaoh rank with gold prefix, gamemode and teleport permissions' },
+  { title: 'Pharaoh rank + Skript', description: 'Rank with custom commands', prompt: 'Create a Pharaoh rank with LuckPerms (gold bold prefix, fly, gamemode, teleport perms) and write a Skript with /execute (lightning on nearby players, 1hr cooldown), /tomb (builds sandstone pyramid), and /decree (broadcasts a message)' },
   { title: 'Build with Falcraft', description: 'AI-generated structures', prompt: 'Build a medieval castle using Falcraft at the spawn area, size 64' },
   { title: 'Set up crates', description: 'Legendary crate with rewards', prompt: 'Set up a legendary crate with diamond sword, enchanted armor, and 64 diamonds' },
-  { title: 'Custom command', description: '/smite with cooldown', prompt: 'Create a /smite command for the Pharaoh rank that strikes lightning, usable once per hour' },
+  { title: 'Write a Skript', description: 'Custom commands & events', prompt: 'Write a Skript that adds /kit (gives diamond gear with 5 min cooldown), /spawn (teleports to world spawn), and a join message that welcomes players with their join count' },
 ]
