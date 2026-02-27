@@ -47,19 +47,14 @@ export function SettingsDialog({
             />
             <p className="text-xs text-muted-foreground">
               Get your API key at{' '}
-              <button
+              <a
+                href="https://openrouter.ai/keys"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-primary underline"
-                onClick={() => {
-                  if (window.electronAPI) {
-                    const { shell } = require('electron')
-                    shell.openExternal('https://openrouter.ai/keys')
-                  } else {
-                    window.open('https://openrouter.ai/keys', '_blank')
-                  }
-                }}
               >
                 openrouter.ai/keys
-              </button>
+              </a>
             </p>
           </div>
 

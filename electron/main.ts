@@ -17,7 +17,7 @@ function createWindow() {
     height: 860,
     minWidth: 900,
     minHeight: 600,
-    title: 'PixelElectron',
+    title: 'PixelElectron - Cursor for Minecraft',
     backgroundColor: '#09090b',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),

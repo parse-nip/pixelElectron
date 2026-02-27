@@ -75,7 +75,7 @@ export function ChatPanel({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-              <span className="text-3xl">&#x26CF;</span>
+              <span className="text-3xl">{'\u26CF'}</span>
             </div>
             <h3 className="text-lg font-semibold mb-2">Welcome to PixelElectron</h3>
             <p className="text-sm text-muted-foreground max-w-md mb-6">

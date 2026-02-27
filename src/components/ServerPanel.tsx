@@ -141,11 +141,11 @@ export function ServerPanel({
 }
 
 const CAPABILITIES = [
-  { icon: '&#x2692;', label: 'Build structures' },
-  { icon: '&#x2655;', label: 'Create ranks' },
-  { icon: '&#x2318;', label: 'Custom commands' },
-  { icon: '&#x2694;', label: 'Minigames & arenas' },
-  { icon: '&#x1F511;', label: 'LuckPerms setup' },
-  { icon: '&#x1F381;', label: 'Crates & rewards' },
-  { icon: '&#x1F6E1;', label: 'WorldGuard regions' },
+  { icon: '\u2692', label: 'Build structures' },
+  { icon: '\u2655', label: 'Create ranks' },
+  { icon: '\u2318', label: 'Custom commands' },
+  { icon: '\u2694', label: 'Minigames & arenas' },
+  { icon: '\uD83D\uDD11', label: 'LuckPerms setup' },
+  { icon: '\uD83C\uDF81', label: 'Crates & rewards' },
+  { icon: '\uD83D\uDEE1', label: 'WorldGuard regions' },
 ]
