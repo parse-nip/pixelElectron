@@ -7,7 +7,12 @@ function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2)
 }
 
-export function useChat(apiKey: string, model: string, serverDir: string) {
+export function useChat(
+  apiKey: string,
+  model: string,
+  serverDir: string,
+  commandSender?: (command: string) => Promise<{ success: boolean; response?: string; error?: string }>,
+) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -97,9 +102,9 @@ export function useChat(apiKey: string, model: string, serverDir: string) {
   }, [apiKey, model, messages])
 
   const executeCommand = useCallback(async (messageId: string, commandIndex: number) => {
-    const api = window.electronAPI
-    if (!api) {
-      setError('RCON not available (running outside Electron)')
+    const sender = commandSender || window.electronAPI?.rcon?.send
+    if (!sender) {
+      setError('Not connected. Connect via RCON or Minehut first.')
       return
     }
 
@@ -116,7 +121,7 @@ export function useChat(apiKey: string, model: string, serverDir: string) {
     const command = msg?.commands?.[commandIndex]?.command
     if (!command) return
 
-    const result = await api.rcon.send(command)
+    const result = await sender(command)
 
     setMessages(prev =>
       prev.map(m => {
@@ -130,7 +135,7 @@ export function useChat(apiKey: string, model: string, serverDir: string) {
         return { ...m, commands }
       }),
     )
-  }, [messages])
+  }, [messages, commandSender])
 
   const executeAllCommands = useCallback(async (messageId: string) => {
     const msg = messages.find(m => m.id === messageId)

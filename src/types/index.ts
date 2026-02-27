@@ -33,11 +33,20 @@ export interface BotConfig {
   username: string
 }
 
+export interface MinehutConfig {
+  authToken: string
+  sessionId: string
+  serverId: string
+  serverName: string
+}
+
 export interface AppSettings {
   apiKey: string
   model: string
+  connectionMode: 'rcon' | 'minehut'
   serverConfig: ServerConfig
   botConfig: BotConfig
+  minehutConfig: MinehutConfig
   serverDir: string
 }
 

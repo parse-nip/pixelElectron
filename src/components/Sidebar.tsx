@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import type { ServerConfig } from '@/types'
+import type { ServerConfig, MinehutConfig } from '@/types'
 
 interface SidebarProps {
+  connectionMode: 'rcon' | 'minehut'
+  onConnectionModeChange: (mode: 'rcon' | 'minehut') => void
   serverConfig: ServerConfig
   onServerConfigChange: (config: ServerConfig) => void
+  minehutConfig: MinehutConfig
+  onMinehutConfigChange: (config: MinehutConfig) => void
   serverDir: string
   onServerDirChange: (dir: string) => void
   isConnected: boolean
@@ -19,8 +23,12 @@ interface SidebarProps {
 }
 
 export function Sidebar({
+  connectionMode,
+  onConnectionModeChange,
   serverConfig,
   onServerConfigChange,
+  minehutConfig,
+  onMinehutConfigChange,
   serverDir,
   onServerDirChange,
   isConnected,
@@ -36,7 +44,7 @@ export function Sidebar({
 
   return (
     <div className="flex flex-col h-full select-none">
-      {/* Logo area - with drag region for macOS */}
+      {/* Logo */}
       <div className="h-11 flex items-center px-4 flex-shrink-0" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
         <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <div className="w-5 h-5 rounded-[4px] bg-emerald-600 flex items-center justify-center">
@@ -48,88 +56,69 @@ export function Sidebar({
 
       {/* Navigation */}
       <div className="px-2 py-1">
-        <NavItem
-          label="Chat"
-          icon={
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          }
-          active={activeView === 'chat'}
-          onClick={() => onViewChange('chat')}
-        />
-        <NavItem
-          label="Viewport"
-          icon={
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-              <line x1="8" y1="21" x2="16" y2="21" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-            </svg>
-          }
-          active={activeView === 'viewport'}
-          onClick={() => onViewChange('viewport')}
-        />
+        <NavItem label="Chat" icon={<ChatIcon />} active={activeView === 'chat'} onClick={() => onViewChange('chat')} />
+        <NavItem label="Viewport" icon={<ViewportIcon />} active={activeView === 'viewport'} onClick={() => onViewChange('viewport')} />
       </div>
 
-      {/* Divider */}
       <div className="mx-3 my-1 h-px bg-border/50" />
 
-      {/* RCON Server */}
+      {/* Connection mode toggle */}
       <div className="px-3 py-2">
+        <div className="flex rounded-md border border-border/40 overflow-hidden mb-2">
+          <button
+            onClick={() => onConnectionModeChange('rcon')}
+            className={`flex-1 text-[10px] py-1 font-medium transition-colors ${
+              connectionMode === 'rcon' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground/70'
+            }`}
+          >
+            Direct (RCON)
+          </button>
+          <button
+            onClick={() => onConnectionModeChange('minehut')}
+            className={`flex-1 text-[10px] py-1 font-medium transition-colors ${
+              connectionMode === 'minehut' ? 'bg-accent text-foreground' : 'text-muted-foreground hover:text-foreground/70'
+            }`}
+          >
+            Minehut
+          </button>
+        </div>
+
         <button
           className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground/80 transition-colors mb-2 w-full"
           onClick={() => setExpanded(!expanded)}
         >
-          <svg
-            width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-            className={`transition-transform ${expanded ? 'rotate-90' : ''}`}
-          >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            className={`transition-transform ${expanded ? 'rotate-90' : ''}`}>
             <polyline points="9 18 15 12 9 6" />
           </svg>
-          <span className="tracking-wide uppercase">RCON Server</span>
+          <span className="tracking-wide uppercase">{connectionMode === 'rcon' ? 'RCON' : 'Minehut'}</span>
           <span className={`ml-auto w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-muted-foreground/30'}`} />
         </button>
 
-        {expanded && (
+        {expanded && connectionMode === 'rcon' && (
           <div className="space-y-1.5 pl-3">
-            <Input
-              placeholder="Host"
-              value={serverConfig.host}
-              onChange={(e) => onServerConfigChange({ ...serverConfig, host: e.target.value })}
-              className="h-7 text-[11px] bg-transparent border-border/40 focus:border-border px-2"
-              disabled={isConnected}
-            />
+            <Input placeholder="Host" value={serverConfig.host} onChange={(e) => onServerConfigChange({ ...serverConfig, host: e.target.value })} className="h-7 text-[11px] bg-transparent border-border/40 px-2" disabled={isConnected} />
             <div className="flex gap-1.5">
-              <Input
-                placeholder="Port"
-                type="number"
-                value={serverConfig.port || ''}
-                onChange={(e) => onServerConfigChange({ ...serverConfig, port: parseInt(e.target.value) || 25575 })}
-                className="h-7 text-[11px] bg-transparent border-border/40 focus:border-border px-2 w-20"
-                disabled={isConnected}
-              />
-              <Input
-                placeholder="Password"
-                type="password"
-                value={serverConfig.password}
-                onChange={(e) => onServerConfigChange({ ...serverConfig, password: e.target.value })}
-                className="h-7 text-[11px] bg-transparent border-border/40 focus:border-border px-2 flex-1"
-                disabled={isConnected}
-              />
+              <Input placeholder="Port" type="number" value={serverConfig.port || ''} onChange={(e) => onServerConfigChange({ ...serverConfig, port: parseInt(e.target.value) || 25575 })} className="h-7 text-[11px] bg-transparent border-border/40 px-2 w-20" disabled={isConnected} />
+              <Input placeholder="Password" type="password" value={serverConfig.password} onChange={(e) => onServerConfigChange({ ...serverConfig, password: e.target.value })} className="h-7 text-[11px] bg-transparent border-border/40 px-2 flex-1" disabled={isConnected} />
             </div>
+            {connectionError && <p className="text-[10px] text-red-400/90 leading-snug">{connectionError}</p>}
+            <Button onClick={isConnected ? onDisconnect : onConnect} variant={isConnected ? 'outline' : 'default'} size="sm" className="w-full h-7 text-[11px]" disabled={isConnecting}>
+              {isConnecting ? 'Connecting...' : isConnected ? 'Disconnect' : 'Connect'}
+            </Button>
+          </div>
+        )}
 
-            {connectionError && (
-              <p className="text-[10px] text-red-400/90 leading-snug">{connectionError}</p>
-            )}
-
-            <Button
-              onClick={isConnected ? onDisconnect : onConnect}
-              variant={isConnected ? 'outline' : 'default'}
-              size="sm"
-              className="w-full h-7 text-[11px]"
-              disabled={isConnecting}
-            >
+        {expanded && connectionMode === 'minehut' && (
+          <div className="space-y-1.5 pl-3">
+            <Input placeholder="Auth Token" type="password" value={minehutConfig.authToken} onChange={(e) => onMinehutConfigChange({ ...minehutConfig, authToken: e.target.value })} className="h-7 text-[11px] bg-transparent border-border/40 px-2" disabled={isConnected} />
+            <Input placeholder="Session ID" type="password" value={minehutConfig.sessionId} onChange={(e) => onMinehutConfigChange({ ...minehutConfig, sessionId: e.target.value })} className="h-7 text-[11px] bg-transparent border-border/40 px-2" disabled={isConnected} />
+            <Input placeholder="Server ID" value={minehutConfig.serverId} onChange={(e) => onMinehutConfigChange({ ...minehutConfig, serverId: e.target.value })} className="h-7 text-[11px] bg-transparent border-border/40 px-2" disabled={isConnected} />
+            <p className="text-[9px] text-muted-foreground/50 leading-snug">
+              Get token &amp; session ID from your browser DevTools (Network tab) while logged into minehut.com
+            </p>
+            {connectionError && <p className="text-[10px] text-red-400/90 leading-snug">{connectionError}</p>}
+            <Button onClick={isConnected ? onDisconnect : onConnect} variant={isConnected ? 'outline' : 'default'} size="sm" className="w-full h-7 text-[11px]" disabled={isConnecting}>
               {isConnecting ? 'Connecting...' : isConnected ? 'Disconnect' : 'Connect'}
             </Button>
           </div>
@@ -138,58 +127,36 @@ export function Sidebar({
 
       {/* Server Directory */}
       <div className="px-3 py-2">
-        <span className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase mb-1.5 block">
-          Server Directory
-        </span>
-        <Input
-          placeholder="/path/to/minecraft/server"
-          value={serverDir}
-          onChange={(e) => onServerDirChange(e.target.value)}
-          className="h-7 text-[11px] bg-transparent border-border/40 focus:border-border px-2"
-        />
-        <p className="text-[9px] text-muted-foreground/60 mt-1 leading-snug">
-          Local path for file creation (datapacks, configs)
-        </p>
+        <span className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase mb-1.5 block">Server Directory</span>
+        <Input placeholder="/path/to/server" value={serverDir} onChange={(e) => onServerDirChange(e.target.value)} className="h-7 text-[11px] bg-transparent border-border/40 px-2" />
+        <p className="text-[9px] text-muted-foreground/60 mt-1 leading-snug">Local path for file creation (datapacks, Skripts, configs)</p>
       </div>
 
-      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Bottom settings */}
+      {/* Settings */}
       <div className="px-2 py-2 border-t border-border/30">
-        <NavItem
-          label="Settings"
-          icon={
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          }
-          active={false}
-          onClick={onOpenSettings}
-        />
+        <NavItem label="Settings" icon={<SettingsIcon />} active={false} onClick={onOpenSettings} />
       </div>
     </div>
   )
 }
 
-function NavItem({ label, icon, active, onClick }: {
-  label: string
-  icon: React.ReactNode
-  active: boolean
-  onClick: () => void
-}) {
+function NavItem({ label, icon, active, onClick }: { label: string; icon: React.ReactNode; active: boolean; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] transition-colors ${
-        active
-          ? 'bg-accent text-foreground font-medium'
-          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-      }`}
-    >
+    <button onClick={onClick} className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] transition-colors ${active ? 'bg-accent text-foreground font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'}`}>
       <span className="opacity-70">{icon}</span>
       {label}
     </button>
   )
+}
+
+function ChatIcon() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+}
+function ViewportIcon() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
+}
+function SettingsIcon() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
 }
