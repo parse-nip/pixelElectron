@@ -156,6 +156,11 @@ ipcMain.handle('bot:status', () => {
   }
 })
 
+// Environment variable handler
+ipcMain.handle('get-env-api-key', () => {
+  return process.env.OPENROUTER_API_KEY || ''
+})
+
 app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {

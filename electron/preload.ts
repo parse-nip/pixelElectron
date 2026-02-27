@@ -17,5 +17,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     status: () =>
       ipcRenderer.invoke('bot:status'),
   },
-  getEnvApiKey: () => process.env.OPENROUTER_API_KEY || '',
+  getEnvApiKey: () => ipcRenderer.invoke('get-env-api-key'),
 })
