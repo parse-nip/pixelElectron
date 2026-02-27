@@ -21,8 +21,10 @@ function createWindow() {
     minWidth: 960,
     minHeight: 600,
     title: 'PixelElectron',
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 14, y: 14 },
+    ...(process.platform === 'darwin' ? {
+      titleBarStyle: 'hiddenInset' as const,
+      trafficLightPosition: { x: 14, y: 14 },
+    } : {}),
     backgroundColor: '#191919',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),

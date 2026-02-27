@@ -4,7 +4,7 @@
 
 ### Overview
 
-PixelElectron is an Electron desktop app ("Cursor for Minecraft") built with React, Vite, TypeScript, Tailwind CSS v3, and shadcn/ui. It connects to Minecraft servers via RCON and uses OpenRouter for AI chat.
+PixelElectron is an Electron desktop app ("Cursor for Minecraft") built with React, Vite, TypeScript, Tailwind CSS v3, and shadcn/ui. It connects to Minecraft servers via RCON and uses OpenRouter (free models) for AI chat. It can also embed a live Minecraft viewport via mineflayer + prismarine-viewer.
 
 ### Running the app
 
@@ -16,9 +16,16 @@ PixelElectron is an Electron desktop app ("Cursor for Minecraft") built with Rea
 
 ### Key conventions
 
-- **No Lucide React**: The user rule prohibits direct use of `lucide-react`. Use inline SVGs or unicode characters for icons. The shadcn dialog component has been patched to use an inline SVG instead of the Lucide `X` icon.
-- **shadcn/ui only**: Always use the CLI (`npx shadcn@latest add <component>`) to add new UI components. Never recreate them manually.
-- **Tailwind CSS v3**: This project uses Tailwind v3 (not v4) for compatibility with shadcn.
-- **Node.js**: Use the latest LTS version available via nvm. Currently v24.x.
-- **OpenRouter API key**: Required for AI chat. Users configure it in the Settings dialog. The `OPENROUTER_API_KEY` secret can be used for automated testing.
-- **RCON**: The Electron main process manages the RCON connection. The renderer communicates via IPC (`window.electronAPI.rcon`). A running Minecraft server is needed for RCON to work.
+- **No Lucide React**: User rule prohibits `lucide-react`. Use inline SVGs or unicode. The dialog component uses an inline SVG X icon.
+- **shadcn/ui only**: Use `npx shadcn@latest add <component>` to add UI components.
+- **Tailwind CSS v3**: Not v4. Required for shadcn compatibility.
+- **Node.js**: Use latest LTS via nvm (currently v24.x).
+- **Free AI models**: All models use the `:free` suffix on OpenRouter. No API billing required.
+- **Falcraft**: AI building uses `/fal generate <size> <prompt>` and `/fal stream <size> <prompt>` via RCON. Requires the Falcraft Fabric mod + fal.ai API key on the server.
+- **Minecraft Viewport**: Uses mineflayer (bot) + prismarine-viewer (3D renderer). These are externalized in the Vite build config due to size.
+- **RCON vs Bot**: RCON (port 25575) is for server commands. Bot (port 25565) is for game-level interaction and the viewport.
+
+### Build gotchas
+
+- `mineflayer` and `prismarine-viewer` must be listed in `build.rollupOptions.external` in the Vite electron config, otherwise the build runs out of memory.
+- The main process uses dynamic `import()` for these modules so they resolve at runtime from `node_modules`.

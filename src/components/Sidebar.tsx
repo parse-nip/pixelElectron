@@ -34,7 +34,7 @@ export function Sidebar({
     <div className="flex flex-col h-full select-none">
       {/* Logo area - with drag region for macOS */}
       <div className="h-11 flex items-center px-4 flex-shrink-0" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
-        <div className="flex items-center gap-2 pl-14" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+        <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <div className="w-5 h-5 rounded-[4px] bg-emerald-600 flex items-center justify-center">
             <span className="text-white text-[9px] font-black">PE</span>
           </div>
@@ -102,7 +102,7 @@ export function Sidebar({
                 type="number"
                 value={serverConfig.port || ''}
                 onChange={(e) => onServerConfigChange({ ...serverConfig, port: parseInt(e.target.value) || 25575 })}
-                className="h-7 text-[11px] bg-transparent border-border/40 focus:border-border px-2 w-16"
+                className="h-7 text-[11px] bg-transparent border-border/40 focus:border-border px-2 w-20"
                 disabled={isConnected}
               />
               <Input
