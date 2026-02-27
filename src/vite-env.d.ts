@@ -11,7 +11,7 @@ interface ElectronAPI {
     disconnect: () => Promise<{ success: boolean }>;
     status: () => Promise<{ connected: boolean; viewerPort: number }>;
   };
-  getEnvApiKey: () => string;
+  getEnvApiKey: () => Promise<string>;
 }
 
 interface Window {

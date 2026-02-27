@@ -24,17 +24,9 @@ const DEFAULT_SETTINGS: AppSettings = {
 function loadSettings(): AppSettings {
   try {
     const saved = localStorage.getItem('pixelelectron-settings')
-    if (saved) {
-      const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
-      if (!parsed.apiKey) {
-        parsed.apiKey = window.electronAPI?.getEnvApiKey?.() || ''
-      }
-      return parsed
-    }
+    if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
   } catch { /* ignore */ }
-  const settings = { ...DEFAULT_SETTINGS }
-  settings.apiKey = window.electronAPI?.getEnvApiKey?.() || ''
-  return settings
+  return { ...DEFAULT_SETTINGS }
 }
 
 function saveSettings(settings: AppSettings) {
@@ -61,6 +53,14 @@ export default function App() {
     messages, isLoading, error,
     sendMessage, executeCommand, executeAllCommands, clearMessages,
   } = useChat(settings.apiKey, settings.model)
+
+  useEffect(() => {
+    if (!settings.apiKey && window.electronAPI?.getEnvApiKey) {
+      window.electronAPI.getEnvApiKey().then((key: string) => {
+        if (key) setSettings(prev => ({ ...prev, apiKey: key }))
+      })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { saveSettings(settings) }, [settings])
 
