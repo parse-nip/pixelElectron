@@ -56,50 +56,24 @@ export function ChatPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center">
-            <span className="text-primary text-xs font-bold">P</span>
-          </div>
-          <h2 className="text-sm font-semibold">PixelElectron Chat</h2>
-        </div>
+      <div className="flex items-center justify-between px-5 h-11 border-b border-border flex-shrink-0">
+        <span className="text-[13px] font-medium text-foreground/80">Chat</span>
         {messages.length > 0 && (
-          <Button variant="ghost" size="sm" className="text-xs h-7" onClick={onClear}>
+          <button
+            onClick={onClear}
+            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors px-2 py-0.5 rounded-sm hover:bg-accent"
+          >
             Clear
-          </Button>
+          </button>
         )}
       </div>
 
       {/* Messages */}
       <ScrollArea className="flex-1" ref={scrollRef}>
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-              <span className="text-3xl">{'\u26CF'}</span>
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Welcome to PixelElectron</h3>
-            <p className="text-sm text-muted-foreground max-w-md mb-6">
-              Your AI-powered Minecraft server assistant. Ask me to build structures,
-              create ranks, set up plugins, and more.
-            </p>
-            <div className="grid grid-cols-2 gap-2 max-w-lg w-full">
-              {SUGGESTIONS.map((suggestion, i) => (
-                <button
-                  key={i}
-                  className="text-left text-xs p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  onClick={() => {
-                    setInput(suggestion.prompt)
-                    textareaRef.current?.focus()
-                  }}
-                >
-                  <div className="font-medium mb-0.5">{suggestion.title}</div>
-                  <div className="text-muted-foreground">{suggestion.description}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+          <EmptyState onSelect={(prompt) => { setInput(prompt); textareaRef.current?.focus() }} />
         ) : (
-          <div className="divide-y divide-border/50">
+          <div>
             {messages.map((message) => (
               <ChatMessageComponent
                 key={message.id}
@@ -110,14 +84,14 @@ export function ChatPanel({
               />
             ))}
             {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-              <div className="flex gap-3 px-4 py-3 bg-muted/20">
-                <div className="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold bg-secondary text-secondary-foreground">
-                  P
-                </div>
-                <div className="flex items-center gap-1 pt-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '300ms' }} />
+              <div className="px-5 py-4 bg-[hsl(0,0%,11%)]">
+                <div className="max-w-2xl mx-auto">
+                  <span className="text-[11px] font-medium tracking-wide text-emerald-400/80 mb-1.5 block">PixelElectron</span>
+                  <div className="flex items-center gap-1.5 h-5">
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
                 </div>
               </div>
             )}
@@ -127,46 +101,68 @@ export function ChatPanel({
 
       {/* Error */}
       {error && (
-        <div className="mx-4 mb-2 p-2 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+        <div className="mx-4 mb-1 px-3 py-1.5 rounded-md bg-red-500/10 text-red-400 text-[12px]">
           {error}
         </div>
       )}
 
       {/* Input */}
       <div className="p-3 border-t border-border">
-        <div className="flex gap-2 items-end">
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value)
-              e.target.style.height = 'auto'
-              e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px'
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask PixelElectron to build, create ranks, set up plugins..."
-            className="min-h-[40px] max-h-[160px] resize-none text-sm"
-            rows={1}
-          />
-          <Button
-            onClick={handleSubmit}
-            disabled={!input.trim() || isLoading}
-            size="sm"
-            className="h-10 px-4"
-          >
-            Send
-          </Button>
+        <div className="max-w-2xl mx-auto">
+          <div className="flex gap-2 items-end rounded-lg border border-border bg-[hsl(0,0%,12%)] p-1.5">
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value)
+                e.target.style.height = 'auto'
+                e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px'
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask anything about your Minecraft server..."
+              className="min-h-[32px] max-h-[140px] resize-none text-[13px] border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-2 py-1"
+              rows={1}
+            />
+            <Button
+              onClick={handleSubmit}
+              disabled={!input.trim() || isLoading}
+              size="sm"
+              className="h-7 px-3 text-[12px] rounded-md flex-shrink-0"
+            >
+              Send
+            </Button>
+          </div>
+          <div className="flex items-center gap-3 mt-1 px-1 text-[10px] text-muted-foreground/60">
+            <span>Enter to send</span>
+            <span>Shift+Enter for new line</span>
+            {!isConnected && <span className="text-amber-500/80">Not connected</span>}
+          </div>
         </div>
-        <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
-          <span>Enter to send</span>
-          <span className="text-border">|</span>
-          <span>Shift+Enter for new line</span>
-          {!isConnected && (
-            <>
-              <span className="text-border">|</span>
-              <span className="text-yellow-500">Server not connected</span>
-            </>
-          )}
+      </div>
+    </div>
+  )
+}
+
+function EmptyState({ onSelect }: { onSelect: (prompt: string) => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-6">
+      <div className="max-w-md text-center">
+        <div className="text-[28px] mb-3 opacity-60">{'\u2B21'}</div>
+        <h3 className="text-[15px] font-semibold text-foreground/90 mb-1">PixelElectron</h3>
+        <p className="text-[13px] text-muted-foreground leading-relaxed mb-8">
+          AI-powered Minecraft server management. Build structures, create ranks, configure plugins.
+        </p>
+        <div className="grid grid-cols-2 gap-2 text-left">
+          {SUGGESTIONS.map((s, i) => (
+            <button
+              key={i}
+              onClick={() => onSelect(s.prompt)}
+              className="px-3 py-2.5 rounded-md border border-border hover:bg-accent/50 transition-colors text-left group"
+            >
+              <div className="text-[12px] font-medium text-foreground/80 group-hover:text-foreground mb-0.5">{s.title}</div>
+              <div className="text-[11px] text-muted-foreground leading-snug">{s.description}</div>
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -174,24 +170,8 @@ export function ChatPanel({
 }
 
 const SUGGESTIONS = [
-  {
-    title: 'Create a Rank',
-    description: 'Set up a new rank with permissions',
-    prompt: 'Create a Pharaoh rank with gold prefix, gamemode and teleport permissions',
-  },
-  {
-    title: 'Build a Structure',
-    description: 'Build something on the server',
-    prompt: 'Build a stone colosseum at coordinates 100 64 100, about 50 blocks wide',
-  },
-  {
-    title: 'Set up Crates',
-    description: 'Configure a crate with rewards',
-    prompt: 'Set up a legendary crate with diamond sword, enchanted armor, and 64 diamonds as rewards',
-  },
-  {
-    title: 'Custom Command',
-    description: 'Create a command for a rank',
-    prompt: 'Create a /smite command for the Pharaoh rank that strikes lightning at a target player, usable once per hour',
-  },
+  { title: 'Create a rank', description: 'Pharaoh rank with gold prefix', prompt: 'Create a Pharaoh rank with gold prefix, gamemode and teleport permissions' },
+  { title: 'Build with Falcraft', description: 'AI-generated structures', prompt: 'Build a medieval castle using Falcraft at the spawn area, size 64' },
+  { title: 'Set up crates', description: 'Legendary crate with rewards', prompt: 'Set up a legendary crate with diamond sword, enchanted armor, and 64 diamonds' },
+  { title: 'Custom command', description: '/smite with cooldown', prompt: 'Create a /smite command for the Pharaoh rank that strikes lightning, usable once per hour' },
 ]

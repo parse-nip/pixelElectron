@@ -6,8 +6,6 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import type { AppSettings } from '@/types'
 import { AVAILABLE_MODELS } from '@/lib/openrouter'
 
@@ -26,71 +24,69 @@ export function SettingsDialog({
 }: SettingsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[440px] bg-[hsl(0,0%,12%)] border-border/50">
         <DialogHeader>
-          <DialogTitle>Settings</DialogTitle>
-          <DialogDescription>
-            Configure your OpenRouter API key and AI model.
+          <DialogTitle className="text-[15px] font-semibold">Settings</DialogTitle>
+          <DialogDescription className="text-[12px] text-muted-foreground">
+            Configure your AI model and API key.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-5 pt-1">
           {/* API Key */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">OpenRouter API Key</label>
+          <div>
+            <label className="text-[12px] font-medium text-foreground/80 block mb-1.5">
+              OpenRouter API Key
+            </label>
             <Input
               type="password"
               placeholder="sk-or-..."
               value={settings.apiKey}
               onChange={(e) => onSettingsChange({ ...settings, apiKey: e.target.value })}
-              className="text-sm"
+              className="h-8 text-[12px] bg-[hsl(0,0%,9%)] border-border/40"
             />
-            <p className="text-xs text-muted-foreground">
-              Get your API key at{' '}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Free tier available at{' '}
               <a
                 href="https://openrouter.ai/keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary underline"
+                className="text-emerald-400/80 hover:text-emerald-400 underline"
               >
                 openrouter.ai/keys
               </a>
+              {' '}&mdash; no credit card required for free models.
             </p>
           </div>
 
-          <Separator />
+          {/* Divider */}
+          <div className="h-px bg-border/30" />
 
           {/* Model Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">AI Model</label>
-            <div className="grid grid-cols-1 gap-1.5">
+          <div>
+            <label className="text-[12px] font-medium text-foreground/80 block mb-2">
+              AI Model <span className="text-emerald-400/60 font-normal ml-1">all free</span>
+            </label>
+            <div className="space-y-0.5">
               {AVAILABLE_MODELS.map((model) => (
                 <button
                   key={model.id}
                   onClick={() => onSettingsChange({ ...settings, model: model.id })}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left transition-colors ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[12px] text-left transition-colors ${
                     settings.model === model.id
-                      ? 'bg-primary/10 border border-primary/30 text-foreground'
-                      : 'border border-transparent hover:bg-muted text-muted-foreground'
+                      ? 'bg-emerald-500/10 text-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                   }`}
                 >
-                  <div className={`w-2 h-2 rounded-full ${
-                    settings.model === model.id ? 'bg-primary' : 'bg-muted-foreground/30'
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    settings.model === model.id ? 'bg-emerald-400' : 'bg-muted-foreground/20'
                   }`} />
-                  <span>{model.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground font-mono">
-                    {model.id.split('/')[0]}
-                  </span>
+                  <span className="flex-1">{model.name}</span>
+                  <span className="text-[10px] text-muted-foreground/60 font-mono">{model.provider}</span>
                 </button>
               ))}
             </div>
           </div>
-
-          <Separator />
-
-          <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
-            Done
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

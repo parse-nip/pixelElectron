@@ -9,4 +9,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     disconnect: () =>
       ipcRenderer.invoke('rcon:disconnect'),
   },
+  bot: {
+    connect: (config: { host: string; port: number; username: string }) =>
+      ipcRenderer.invoke('bot:connect', config),
+    disconnect: () =>
+      ipcRenderer.invoke('bot:disconnect'),
+    status: () =>
+      ipcRenderer.invoke('bot:status'),
+  },
 })

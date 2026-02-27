@@ -1,98 +1,117 @@
 import { useState, useCallback, useEffect } from 'react'
+import { Sidebar } from '@/components/Sidebar'
 import { ChatPanel } from '@/components/ChatPanel'
-import { ServerPanel } from '@/components/ServerPanel'
+import { MinecraftViewport } from '@/components/MinecraftViewport'
 import { SettingsDialog } from '@/components/SettingsDialog'
 import { useChat } from '@/hooks/useChat'
-import type { AppSettings, ServerConfig } from '@/types'
+import type { AppSettings, ServerConfig, BotConfig } from '@/types'
 
 const DEFAULT_SETTINGS: AppSettings = {
   apiKey: '',
-  model: 'google/gemini-2.0-flash-001',
+  model: 'meta-llama/llama-3.3-70b-instruct:free',
   serverConfig: {
     host: 'localhost',
     port: 25575,
     password: '',
+  },
+  botConfig: {
+    host: 'localhost',
+    port: 25565,
+    username: 'PixelBot',
   },
 }
 
 function loadSettings(): AppSettings {
   try {
     const saved = localStorage.getItem('pixelelectron-settings')
-    if (saved) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
-    }
+    if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
   } catch { /* ignore */ }
   return DEFAULT_SETTINGS
 }
 
 function saveSettings(settings: AppSettings) {
-  try {
-    localStorage.setItem('pixelelectron-settings', JSON.stringify(settings))
-  } catch { /* ignore */ }
+  try { localStorage.setItem('pixelelectron-settings', JSON.stringify(settings)) } catch { /* ignore */ }
 }
 
 export default function App() {
   const [settings, setSettings] = useState<AppSettings>(loadSettings)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [activeView, setActiveView] = useState<'chat' | 'viewport'>('chat')
+
+  // RCON state
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [connectionError, setConnectionError] = useState<string | null>(null)
 
+  // Bot state
+  const [isBotConnected, setIsBotConnected] = useState(false)
+  const [isBotConnecting, setIsBotConnecting] = useState(false)
+  const [botError, setBotError] = useState<string | null>(null)
+  const [viewerPort, setViewerPort] = useState<number | null>(null)
+
   const {
-    messages,
-    isLoading,
-    error,
-    sendMessage,
-    executeCommand,
-    executeAllCommands,
-    clearMessages,
+    messages, isLoading, error,
+    sendMessage, executeCommand, executeAllCommands, clearMessages,
   } = useChat(settings.apiKey, settings.model)
 
-  useEffect(() => {
-    saveSettings(settings)
-  }, [settings])
+  useEffect(() => { saveSettings(settings) }, [settings])
 
-  const handleSettingsChange = useCallback((newSettings: AppSettings) => {
-    setSettings(newSettings)
-  }, [])
+  const handleSettingsChange = useCallback((s: AppSettings) => setSettings(s), [])
 
   const handleServerConfigChange = useCallback((config: ServerConfig) => {
     setSettings(prev => ({ ...prev, serverConfig: config }))
   }, [])
 
+  const handleBotConfigChange = useCallback((config: BotConfig) => {
+    setSettings(prev => ({ ...prev, botConfig: config }))
+  }, [])
+
   const handleConnect = useCallback(async () => {
     const api = window.electronAPI
-    if (!api) {
-      setConnectionError('RCON not available (running in browser mode)')
-      return
-    }
-
+    if (!api) { setConnectionError('RCON not available (browser mode)'); return }
     setIsConnecting(true)
     setConnectionError(null)
-
     const result = await api.rcon.connect(settings.serverConfig)
-    if (result.success) {
-      setIsConnected(true)
-    } else {
-      setConnectionError(result.error || 'Connection failed')
-    }
+    if (result.success) { setIsConnected(true) } else { setConnectionError(result.error || 'Failed') }
     setIsConnecting(false)
   }, [settings.serverConfig])
 
   const handleDisconnect = useCallback(async () => {
     const api = window.electronAPI
-    if (api) {
-      await api.rcon.disconnect()
-    }
+    if (api) await api.rcon.disconnect()
     setIsConnected(false)
     setConnectionError(null)
+  }, [])
+
+  const handleBotConnect = useCallback(async () => {
+    const api = window.electronAPI
+    if (!api) { setBotError('Not available in browser mode'); return }
+    setIsBotConnecting(true)
+    setBotError(null)
+    const result = await api.bot.connect(settings.botConfig)
+    if (result.success) {
+      setIsBotConnected(true)
+      setViewerPort(result.viewerPort || null)
+      setActiveView('viewport')
+    } else {
+      setBotError(result.error || 'Failed')
+    }
+    setIsBotConnecting(false)
+  }, [settings.botConfig])
+
+  const handleBotDisconnect = useCallback(async () => {
+    const api = window.electronAPI
+    if (api) await api.bot.disconnect()
+    setIsBotConnected(false)
+    setViewerPort(null)
+    setBotError(null)
   }, [])
 
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <div className="w-64 flex-shrink-0 border-r border-border bg-card">
-        <ServerPanel
+      <div className="w-[220px] flex-shrink-0 border-r border-border/40 bg-[hsl(0,0%,11%)]">
+        <Sidebar
           serverConfig={settings.serverConfig}
           onServerConfigChange={handleServerConfigChange}
           isConnected={isConnected}
@@ -101,24 +120,61 @@ export default function App() {
           isConnecting={isConnecting}
           connectionError={connectionError}
           onOpenSettings={() => setSettingsOpen(true)}
+          activeView={activeView}
+          onViewChange={setActiveView}
         />
       </div>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <ChatPanel
-          messages={messages}
-          isLoading={isLoading}
-          error={error}
-          isConnected={isConnected}
-          onSendMessage={sendMessage}
-          onExecuteCommand={executeCommand}
-          onExecuteAll={executeAllCommands}
-          onClear={clearMessages}
-        />
+      {/* Main content */}
+      <div className="flex-1 flex min-w-0">
+        {activeView === 'chat' ? (
+          <div className="flex-1 flex">
+            {/* Chat panel */}
+            <div className="flex-1 min-w-0">
+              <ChatPanel
+                messages={messages}
+                isLoading={isLoading}
+                error={error}
+                isConnected={isConnected}
+                onSendMessage={sendMessage}
+                onExecuteCommand={executeCommand}
+                onExecuteAll={executeAllCommands}
+                onClear={clearMessages}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex">
+            {/* Viewport */}
+            <div className="flex-1 min-w-0">
+              <MinecraftViewport
+                botConfig={settings.botConfig}
+                onBotConfigChange={handleBotConfigChange}
+                isBotConnected={isBotConnected}
+                isBotConnecting={isBotConnecting}
+                botError={botError}
+                viewerPort={viewerPort}
+                onBotConnect={handleBotConnect}
+                onBotDisconnect={handleBotDisconnect}
+              />
+            </div>
+            {/* Side chat in viewport mode */}
+            <div className="w-[380px] flex-shrink-0 border-l border-border/40">
+              <ChatPanel
+                messages={messages}
+                isLoading={isLoading}
+                error={error}
+                isConnected={isConnected}
+                onSendMessage={sendMessage}
+                onExecuteCommand={executeCommand}
+                onExecuteAll={executeAllCommands}
+                onClear={clearMessages}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Settings Dialog */}
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}

@@ -19,10 +19,17 @@ export interface ServerConfig {
   password: string
 }
 
+export interface BotConfig {
+  host: string
+  port: number
+  username: string
+}
+
 export interface AppSettings {
   apiKey: string
   model: string
   serverConfig: ServerConfig
+  botConfig: BotConfig
 }
 
 export interface OpenRouterMessage {

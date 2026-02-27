@@ -9,6 +9,16 @@ export default defineConfig({
     electron({
       main: {
         entry: 'electron/main.ts',
+        vite: {
+          build: {
+            rollupOptions: {
+              external: [
+                'mineflayer',
+                'prismarine-viewer',
+              ],
+            },
+          },
+        },
       },
       preload: {
         input: 'electron/preload.ts',
