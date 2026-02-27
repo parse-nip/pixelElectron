@@ -102,10 +102,8 @@ export async function streamChatMessage(
 }
 
 export const AVAILABLE_MODELS = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B', provider: 'meta', free: true },
-  { id: 'qwen/qwen3-30b-a3b:free', name: 'Qwen3 30B', provider: 'qwen', free: true },
-  { id: 'google/gemma-3-27b-it:free', name: 'Gemma 3 27B', provider: 'google', free: true },
   { id: 'mistralai/mistral-small-3.1-24b-instruct:free', name: 'Mistral Small 3.1', provider: 'mistral', free: true },
-  { id: 'deepseek/deepseek-chat-v3-0324:free', name: 'DeepSeek V3', provider: 'deepseek', free: true },
-  { id: 'nvidia/llama-3.1-nemotron-70b-instruct:free', name: 'Nemotron 70B', provider: 'nvidia', free: true },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B', provider: 'meta', free: true },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free', name: 'Hermes 3 405B', provider: 'nous', free: true },
+  { id: 'google/gemma-3-27b-it:free', name: 'Gemma 3 27B', provider: 'google', free: true },
 ]

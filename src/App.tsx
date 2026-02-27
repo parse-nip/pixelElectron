@@ -8,7 +8,7 @@ import type { AppSettings, ServerConfig, BotConfig } from '@/types'
 
 const DEFAULT_SETTINGS: AppSettings = {
   apiKey: '',
-  model: 'meta-llama/llama-3.3-70b-instruct:free',
+  model: 'mistralai/mistral-small-3.1-24b-instruct:free',
   serverConfig: {
     host: 'localhost',
     port: 25575,
@@ -24,9 +24,17 @@ const DEFAULT_SETTINGS: AppSettings = {
 function loadSettings(): AppSettings {
   try {
     const saved = localStorage.getItem('pixelelectron-settings')
-    if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
+    if (saved) {
+      const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
+      if (!parsed.apiKey) {
+        parsed.apiKey = window.electronAPI?.getEnvApiKey?.() || ''
+      }
+      return parsed
+    }
   } catch { /* ignore */ }
-  return DEFAULT_SETTINGS
+  const settings = { ...DEFAULT_SETTINGS }
+  settings.apiKey = window.electronAPI?.getEnvApiKey?.() || ''
+  return settings
 }
 
 function saveSettings(settings: AppSettings) {
